@@ -1,18 +1,27 @@
 #!/usr/bin/python3
-"""Exports to-do list information for a given employee ID to CSV format."""
-import csv
+"""query an API endpoint"""
+
 import requests
-import sys
+from sys import argv
 
 if __name__ == "__main__":
-    user_id = sys.argv[1]
-    url = "https://jsonplaceholder.typicode.com/"
-    user = requests.get(url + "users/{}".format(user_id)).json()
-    username = user.get("username")
-    todos = requests.get(url + "todos", params={"userId": user_id}).json()
+    employee_id = argv[1]
+    user = requests.get(
+        'https://jsonplaceholder.typicode.com/users/{}'
+        .format(employee_id)).json()
+    all_todos = requests.get(
+        'https://jsonplaceholder.typicode.com/todos').json()
+    user_todos = [todo for todo in all_todos if user['id'] == todo['userId']]
 
-    with open("{}.csv".format(user_id), "w", newline="") as csvfile:
-        writer = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
-        [writer.writerow(
-            [user_id, username, t.get("completed"), t.get("title")]
-            ) for t in todos]
+    with open(str(user['id']) + '.csv', 'w') as f:
+        for index, todo in enumerate(user_todos):
+            if index == len(user_todos)-1:
+                f.write('"{}","{}","{}","{}"'.format(
+                    user['id'], user['username'],
+                    todo['completed'], todo['title']
+                ))
+            else:
+                f.write('"{}","{}","{}","{}"\n'.format(
+                    user['id'], user['username'],
+                    todo['completed'], todo['title']
+                ))

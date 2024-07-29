@@ -1,18 +1,28 @@
 #!/usr/bin/python3
-"""Exports to-do list information of all employees to JSON format."""
+"""query an API endpoint"""
+
 import json
 import requests
+from sys import argv
 
 if __name__ == "__main__":
-    url = "https://jsonplaceholder.typicode.com/"
-    users = requests.get(url + "users").json()
+    employee_id = argv[1]
+    user = requests.get('https://jsonplaceholder.typicode.com/users/{}'
+                        .format(employee_id)).json()
+    all_todos = requests.get(
+        'https://jsonplaceholder.typicode.com/todos').json()
+    user_todos = [todo for todo in all_todos if user['id'] == todo['userId']]
 
-    with open("todo_all_employees.json", "w") as jsonfile:
-        json.dump({
-            u.get("id"): [{
-                "task": t.get("title"),
-                "completed": t.get("completed"),
-                "username": u.get("username")
-            } for t in requests.get(url + "todos",
-                                    params={"userId": u.get("id")}).json()]
-            for u in users}, jsonfile)
+    user_dict = {}
+    user_dict[user['id']] = []
+
+    for todo in user_todos:
+        todo['username'] = user['username']
+        todo['task'] = todo['title']
+        del todo['userId']
+        del todo['id']
+        del todo['title']
+        user_dict[user['id']].append(todo)
+
+    with open('{}.json'.format(user['id']), 'w') as file:
+        json.dump(user_dict, file)
